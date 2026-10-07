@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sentiment Analyzer</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px;}
+#status{margin-bottom:10px;color:#555;}
+textarea{width:100%;height:120px;}
+button{padding:10px 20px;font-size:1rem;}
+.result{margin-top:20px;font-weight:bold;}
+</style>
+</head>
+<body>
+<h1>Sentiment Analyzer</h1>
+<div id="status">Loading model…</div>
+<textarea id="text" placeholder="Type or paste your text here…"></textarea><br>
+<button id="analyze">Analyze</button>
+<div class="result" id="result"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.12.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/sentiment@latest"></script>
+<script>
+let model;
+async function loadModel(){
+ try{
+   model = await sentiment.load();
+   document.getElementById('status').textContent = 'Model loaded. Ready to analyze.';
+ }catch(e){
+   document.getElementById('status').textContent = 'Error loading model: '+e;
+ }
+}
+document.getElementById('analyze').addEventListener('click', async()=>{
+ const txt = document.getElementById('text').value.trim();
+ if(!txt){alert('Please enter some text');return;}
+ if(!model){await loadModel();}
+ const res = await model.predict(txt);
+ // res is array of objects with label and score
+ const sorted = res.slice().sort((a,b)=>b.score-a.score);
+ const top = sorted[0];
+ let html = `<p>Sentiment: <strong>${top.label}</strong> (${(top.score*100).toFixed(1)}%)</p>`;
+ html += '<ul>';
+ res.forEach(r=>{html+=`<li>${r.label}: ${(r.score*100).toFixed(1)}%</li>`;});
+ html+='</ul>';
+ document.getElementById('result').innerHTML = html;
+});
+loadModel();
+</script>
+</body>
+</html>
